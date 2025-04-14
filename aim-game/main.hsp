@@ -1,0 +1,229 @@
+screen 0,1280,720
+#uselib "winmm.dll"
+#cfunc global timeGetTime "timeGetTime"
+//#define FOLDER_PASS dir_cur+"\\shot"
+#module
+	#deffunc make_folder//フォルダ作成関数
+		dirlist x, dir_cur+"\\shot", 5
+		if (stat=0){
+			mkdir "shot"
+		}
+	return 
+	
+	#deffunc make_score_file int difficulty
+		notesel buff
+		if (difficulty = 0){
+			exist dir_cur+"\\shot\\easy.txt"
+			if (strsize = -1){
+				repeat 30
+					noteadd "NULL", cnt * 3
+					noteadd "NULL", cnt * 3 + 1
+					noteadd "0", cnt * 3 + 2
+				loop
+				notesave dir_cur+"\\shot\\easy.txt"
+			}
+		}
+		if (difficulty = 1){
+			exist dir_cur+"\\shot\\nomal.txt"
+			if (strsize = -1){
+				repeat 30
+					noteadd "NULL", cnt * 3
+					noteadd "NULL", cnt * 3 + 1
+					noteadd "0", cnt * 3 + 2
+				loop
+				notesave dir_cur+"\\shot\\nomal.txt"
+			}
+		}
+		if (difficulty = 2){
+			exist dir_cur+"\\shot\\hard.txt"
+			if (strsize = -1){
+				repeat 30
+					noteadd "NULL", cnt * 3
+					noteadd "NULL", cnt * 3 + 1
+					noteadd "0", cnt * 3 + 2
+				loop
+				notesave dir_cur+"\\shot\\hard.txt"
+			}
+		}
+	return
+#global
+
+onclick gosub *click
+	x = 0
+	y = 0
+	size = 0
+	now_count = 0
+	count_size = 10
+	size_coefficient = 0
+	correct_flag = 0
+*start
+	make_folder
+	game_state = 0
+	title "反射神経ゲーム2"
+	cls
+	pos 480,200
+	font "MSゴシック",50 ,1
+	mes "クリックゲーム"
+	pos 400,280
+	font "MSゴシック",30 
+	mes "黒い円をできるだけ早くクリックしよう!"
+	pos 550,330
+	objsize 150,40
+	button gosub"イージー",*easy
+	button gosub"ノーマル",*normal
+	button gosub"ハード",*hard
+	button goto"設定",*setting
+stop
+
+*easy
+	size_coefficient = 15
+	size_dispersion = 10
+	make_score_file(0)
+	dificulty = 0
+	gosub *main
+return
+
+*normal
+	size_coefficient = 10
+	size_dispersion = 8
+	make_score_file(1)
+	dificulty = 1
+	gosub *main
+return
+
+*hard
+	size_coefficient = 5
+	size_dispersion = 5
+	make_score_file(2)
+	dificulty = 2
+	gosub *main
+return
+
+*main
+	onclick 0
+	Dim elapsed_time, count_size
+	Dim miss_count, count_size
+	Dim score_count, count_size
+	game_state = 1
+	now_count = 0
+	cls
+	mes "3…"
+	wait 100
+	cls
+	mes "3…2…"
+	wait 100
+	cls
+	mes "3…2…1…"
+	wait 100
+	onclick 1
+	cls
+	repeat
+		onclick 0
+		correct_flag = 0
+		randomize 
+		wait_time = rnd(300) + 50
+		x = rnd(640)
+		y = rnd(480)
+		size = rnd(size_dispersion) + 1
+		if (now_count >= count_size){
+			break
+		}
+		if ((x - size * size_coefficient) >= 0 and (x + size * size_coefficient) <= 1280){
+			if ((y - size * size_coefficient) >= 0 and (y + size * size_coefficient) <= 720){
+				cls 
+				wait wait_time
+				//dialog str(x - size * size_coefficient) + "," + str(y - size * size_coefficient) + "\n" +  str(x + size * size_coefficient) + "," + str(y + size * size_coefficient)
+				circle x - size * size_coefficient,y - size * size_coefficient,x + size * size_coefficient,y + size * size_coefficient,1
+				timer_start_point = timeGetTime()
+				onclick 1
+				now_count += 1
+				title "反射神経ゲーム2  残り " + str(count_size - now_count)
+				repeat
+					wait
+					if (correct_flag = 1){
+						score_count.(now_count-1) = int((10000.0 - (1000.0 * double(miss_count.(now_count-1)))) * (1.0/(powf((double(elapsed_time.(now_count-1))/1000.0),2)+1.0)))
+						//dialog 1.0/(powf((double(elapsed_time.(now_count-1))/1000.0),2)+1.0)
+						break
+					}
+				loop
+			}
+		}
+	loop
+	
+	cls
+	time_add = 0
+	miss_add = 0
+	score_add = 0
+	game_state = 2
+	result_select = 0
+	result_text_char = ""
+	mes "Result"
+	result_text_char += "No  time  miss  score \n"
+	for result_count, 1, count_size + 1, 1
+		//mes "No" + result_count + " : " +  elapsed_time.(result_count-1) + "ms  " +  miss_count.(result_count-1) + "miss  " + score_count.(result_count-1) + "score"
+		result_text_char +=strf("%-6d",result_count) + strf("%-7d",elapsed_time.(result_count-1)) + "   " + str(miss_count.(result_count-1)) + "   " + str(score_count.(result_count-1))+ "\n"
+		//result_text_char += "No" + result_count + " : " +  elapsed_time.(result_count-1) + "ms  " +  miss_count.(result_count-1) + "miss  " + score_count.(result_count-1) + "score" + "\n"
+		time_add += elapsed_time.(result_count-1)
+		miss_add += miss_count.(result_count-1)
+		score_add += score_count.(result_count-1)
+	next
+	if (score_add > 85000){
+		evaluation = "God"
+	}else : if (score_add > 80000){
+		evaluation = "Fantastic"
+	}else : if (score_add > 75000){
+		evaluation = "Excellent"
+	}else : if (score_add > 65000){
+		evaluation = "Very Good"
+	}else : if (score_add > 50000){
+		evaluation = "Good"
+	}else : if (score_add > 40000){
+		evaluation = "Not Bad"
+	}else : if (score_add > 30000){
+		evaluation = "Bad"
+	}
+	objsize 200,100
+	listbox result_select, 150, str(result_text_char)
+	mes "平均速度 : " +  time_add/count_size + "ms"
+	mes "ミスの合計 : " + miss_add
+	mes "トータルスコア : " + score_add
+	mes "評価 : " + evaluation
+	objsize 50,30
+	button gosub "戻る", *start
+return
+
+*click
+	if (game_state = 1){
+		click_point_x = mousex
+		click_point_y = mousey
+		if (sqrt(powf(x - click_point_x,2)+powf(y - click_point_y,2)) < size * size_coefficient){
+			correct_flag = 1
+			timer_end_point = timeGetTime()
+			elapsed_time.(now_count-1) = timer_end_point - timer_start_point
+			//dialog elapsed_time.(now_count-1)
+			//dialog miss_count.(now_count-1)
+		}
+		else{
+			miss_count.(now_count-1) += 1
+		}
+	}
+return
+
+*setting
+	cls
+	mes "的の数"
+	input count_size, 50, 20, 3
+	mes "ランキングの削除"
+	button gosub "削除", *delete_ranking
+	button goto "戻る", *start
+stop
+
+*delete_ranking
+	dialog　"一度削除すると元に戻すことはできません。\n本当に削除しますか？", 3  
+	if (stat = 6){
+		dialog "削除しました"
+	}
+return
+	
+
+	

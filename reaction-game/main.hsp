@@ -1,0 +1,105 @@
+screen 
+#uselib "winmm.dll"
+#cfunc global timeGetTime "timeGetTime"
+onclick gosub *click
+count_size = 10
+*start
+	title "反射神経ゲーム"
+	cls
+	pos 160,150
+	font "MSゴシック",50 ,1
+	mes "クリックゲーム"
+	pos 130,230
+	font "MSゴシック",30 
+	mes "できるだけ早くクリックを押そう！"
+	pos 230,280
+	objsize 150,40
+	button gosub"start",*main
+	button goto"設定",*setting
+stop
+
+*main
+	onclick 0
+	Dim elapsed_time, count_size
+	now_count = 0
+	cls
+	mes "3…"
+	wait 100
+	cls
+	mes "3…2…"
+	wait 100
+	cls
+	mes "3…2…1…"
+	wait 100
+	onclick 1
+	cls
+	repeat
+		if (now_count >= count_size){
+			break
+		}
+		correct_flag = 0
+		cls
+		randomize
+		wait_time = rnd(500) + 100
+		onclick 0
+		wait wait_time
+		pos 250,200
+		font "MSゴシック",50 ,1
+		mes "click!"
+		onclick 1
+		timer_start_point = timeGetTime()
+		now_count += 1
+		title "反射神経ゲーム  残り " + str(count_size - now_count)
+		repeat
+			wait
+			if (correct_flag = 1){
+				break
+			}
+		loop
+	loop
+	cls
+	time_add = 0
+	game_state = 2
+	result_select = 0
+	result_text_char = ""
+	mes "Result"
+	result_text_char += "No  time  \n"
+	for result_count, 1, count_size + 1, 1
+		result_text_char +=strf("%-6d",result_count) + strf("%-7d",elapsed_time.(result_count-1)) + "\n"
+		time_add += elapsed_time.(result_count-1)
+	next
+	if (time_add/count_size > 1000){
+		evaluation = "Bad"
+	}else : if (time_add/count_size > 7000){
+		evaluation = "Not Bad"
+	}else : if (time_add/count_size > 500){
+		evaluation = "Good"
+	}else : if (time_add/count_size > 400){
+		evaluation = "Very Good"
+	}else : if (time_add/count_size > 300){
+		evaluation = "Excellent"
+	}else : if (time_add/count_size > 200){
+		evaluation = "Fantastic"
+	}else{
+		evaluation = "God"
+	}
+	objsize 200,100
+	listbox result_select, 150, str(result_text_char)
+	mes "平均速度 : " +  time_add/count_size + "ms"
+	mes "評価 : " + evaluation
+	objsize 50,30
+	button gosub "戻る", *start
+return
+
+*click
+	correct_flag = 1
+	timer_end_point = timeGetTime()
+	elapsed_time.(now_count-1) = timer_end_point - timer_start_point
+return
+
+*setting
+	cls
+	mes "問題数"
+	input count_size, 50, 20, 3
+	button goto "戻る", *start
+stop

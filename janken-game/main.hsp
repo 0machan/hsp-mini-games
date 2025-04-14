@@ -1,0 +1,101 @@
+//インクルード文
+#include "hsp3util.as"
+//画像のロードとウィンドウサイズの調節
+screen 0,900,900
+celload "pic\\gu.png",1
+celload "pic\\choki.png",2
+celload "pic\\pa.png",3
+//乱数の初期化
+randomize
+//画像のサイズ指定
+objsize 300,300
+//1つ目のボタン（グー）
+objimage 1
+pos 0,600
+button goto "",*hand1
+//敵の画像（グー）
+pos 300,0
+celput 1
+//2つ目のボタン（チョキ）
+objimage 2
+pos 300,600
+button goto "",*hand2
+//3つの目のボタン（パー）
+objimage 3
+pos 600,600
+button goto "",*hand3
+//じゃんけんの掛け声
+pos 0,450
+font "游ゴシック",50,1
+text 250
+emes "さいしょはグー"
+wait 100
+pos 550,450
+text 300
+emes "じゃんけん"
+//相手の手を決める１：グー　２：チョキ　３：パー
+EHand = rnd(3) + 1
+stop
+
+*hand1//グーを押したときに飛ぶ処理
+	MHand = 1//MHandは自分の出した手１：グー　２：チョキ　３：パー
+	if Ehand = 1{
+		WorL = 2//WorLは勝敗　勝ち：１　引き分け：２　負け：３
+	}else : if Ehand = 2{
+		WorL = 1
+	}else : if Ehand = 3{
+		WorL = 3
+	}
+	goto *main
+return
+
+*hand2//チョキを押したときに飛ぶ処理
+	MHand = 2
+	if Ehand = 1{
+		WorL = 3
+	}else : if Ehand = 2{
+		WorL = 2
+	}else : if Ehand = 3{
+		WorL = 1
+	}
+	goto *main
+return
+
+*hand3//パーを押したときに飛ぶ処理
+	MHand = 3
+	if Ehand = 1{
+		WorL = 1
+	}else : if Ehand = 2{
+		WorL = 3
+	}else : if Ehand = 3{
+		WorL = 2
+	}
+	goto *main
+return
+
+*main//じゃんけんの勝敗を決める処理
+cls
+//ポン！の字を表示
+font "游ゴシック",50,1
+pos 350,450
+mes "ポン！"
+//相手の手を表示
+pos 300,0
+celput EHand
+//自分の手を表示
+pos 300,600
+celput MHand
+//勝敗処理
+pos 50,50
+if WorL = 1{
+	color 255,0,0
+	mes "勝ち！"
+}else : if WorL = 2{
+	color 255,0,255
+	mes "引き分け"
+}else : if WorL = 3{
+	color 0,0,255
+	mes "負け…"
+}
+stop
+return
